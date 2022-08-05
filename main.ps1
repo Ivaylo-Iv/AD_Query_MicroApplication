@@ -1,7 +1,12 @@
 # Init PowerShell Gui
 Add-Type -AssemblyName System.Windows.Forms
-
+$time = (Get-Date).Ticks
 $DefaultSaveLocation = ($env:USERPROFILE + "\Documents")
+$ExcelFile = New-Object -ComObject excel.application
+$ExcelFile.visible = $true
+$WorkBookFile = $ExcelFile.workbooks.add()
+$sheet1 = $WorkBookFile.worksheets.item(1)
+
 
 # Create a new form
 $SearchAD = New-Object System.Windows.Forms.Form
@@ -113,13 +118,42 @@ $SearchButton.Add_Click({
             $Givvenname = (Get-ADUser -Filter "name -eq '$text'").GivenName;
             $ErrorLabel.Text = $Givvenname
             $gr = Get-ADPrincipalGroupMembership $Givvenname | Select-Object name
+            $sheet1.name = "User"
+            $sheet1.cells.item(1,1) = "User"
+            $sheet1.cells.item(1,2) = "Groups that the user is a member of."
+            $sheet1.cells.item(2,1) = $inputBox.Text
+            $num = 2
             For ($i=0; $i -lt $gr.Length; $i++) {
-                $ErrorLabel.Text = $gr[$i]
+                $temp1 = $gr[$i]
+               $sheet1.cells.item($num,2) = "$temp1" 
+               $num = $num + 1;
                 }
-            
+                $Sheet1.Columns.AutoFit()
+                $temp3 = $locationBox.Text
+                $file = "$temp3\$time.xlsx"
+                $ExcelFile.displayalerts = $false;
+                $WorkBookFile.Saveas("$file")
+                $ExcelFile.displayalerts = $true;
+
+
         } else{
             $groupMembers = Get-ADGroupMember "$text"
-            $ErrorLabel.Text = "Group selected"
+            $sheet1.name = "Group"
+            $sheet1.cells.item(1,1) = "Group"
+            $sheet1.cells.item(1,2) = "Members of the group"
+            $sheet1.cells.item(2,1) = $inputBox.Text
+            $tempNum = 2
+            For ($i=0; $i -lt $groupMembers.Length; $i++) {
+                $tempname = $groupMembers[$i].name
+               $sheet1.cells.item($tempNum,2) = "$tempname" 
+                $tempNum = $tempNum + 1;
+                }
+                $Sheet1.Columns.AutoFit()
+                $temp3 = $locationBox.Text
+                $file = "$temp3\$time.xlsx"
+                $ExcelFile.displayalerts = $false;
+                $WorkBookFile.Saveas("$file")
+                $ExcelFile.displayalerts = $true;
         }
     }
    
